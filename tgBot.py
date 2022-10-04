@@ -14,13 +14,19 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands="start")
 async def start(message: types.Message):
-    start_buttons = ['Анонсы мероприятий(в разработке)', 'Последние 5 новостей', 'Расписание занятий', 'Погода в Гродно',
+    start_buttons = ['Анонсы мероприятий(в разработке)',
+                     'Последние 5 новостей',
+                     'Расписание занятий',
+                     'Погода в Гродно',
                      'Сообщить об ошибке(в разработке)']
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*start_buttons)
-    await message.answer(f'Добро пожаловать в наш чат-бот, {message.from_user.first_name}!\n'
-                         f'Если Вы нашли ошибку в работе чат-бота, напишите об этом, выбрав соответствующий пункт меню.\n'
-                         f'А сейчас выберите необходимое действие в меню.', reply_markup=keyboard)
+
+    await message.answer(
+        f'Добрый день, {message.from_user.first_name}!\n👩🏻‍🏫 Добро пожаловать в чат-бот Гродненского областного института развития образования!‍🎓‍🏫‍ \n'
+        f'👏Рады Вас приветствовать!👏\n'
+        f'Больше информации Вы можете получить на нашем сайте {hlink("groiro.by", "https://groiro.by/")}.\n'
+        f'Выберите один из пунктов меню ниже👇', reply_markup=keyboard, disable_web_page_preview=True)
 
 
 @dp.message_handler(Text(equals='Последние 5 новостей'))
@@ -35,17 +41,27 @@ async def get_last_five_news(message: types.Message):
         await message.answer_photo(image, news)
 
 
+@dp.message_handler(Text(equals='Анонсы мероприятий(в разработке)'))
+async def get_announcement(message: types.Message):
+    pass
+
+
+@dp.message_handler(Text(equals='Сообщить об ошибке(в разработке)'))
+async def get_error_message(message: types.Message):
+    pass
+
+
 @dp.message_handler(Text(equals="Погода в Гродно"))
 async def get_weather_in_Grodno(message: types.Message):
     weather = get_weather()
     await message.answer(f'🌎 {hbold("Погода в Гродно сейчас.")} 🌈\n\n'
                          f'{weather[2]}\n'
-                         f'Температура: {round(weather[1])}°С\n'
-                         f'Влажность: {weather[3]}%\n'
-                         f'Давление: {weather[4]} мм.рт.ст\n'
-                         f'Ветер: {weather[5]} м/с\n'
-                         f'Рассвет: {weather[6]}\n'
-                         f'Закат: {weather[7]}\n\n'
+                         f'{hbold("Температура:")} {round(weather[1])}°С\n'
+                         f'{hbold("Влажность:")} {weather[3]}%\n'
+                         f'{hbold("Давление:")} {weather[4]} мм.рт.ст\n'
+                         f'{hbold("Ветер:")} {weather[5]} м/с\n'
+                         f'{hbold("Рассвет:")} {weather[6]}\n'
+                         f'{hbold("Закат:")} {weather[7]}\n\n'
                          f'{hbold("🤩 Хорошего дня 🤩")}')
 
 
@@ -64,7 +80,8 @@ async def get_weather_in_Grodno(message: types.Message):
         if callback_query.data in dict_ttables:
             tt = get_timetable(callback_query.data)
             await message.answer(f"{hbold('Ваше ПК:')} {tt[0]}.\n\n")
-            await message.answer_document(open(tt[1], "rb"), caption='Ваше расписание ☝')
+            await message.answer_document(open(tt[1], "rb"),
+                                          caption='Ваше расписание ☝. Нажмите на него, чтобы скачать.')
 
 
 async def news_every_10_minute():
