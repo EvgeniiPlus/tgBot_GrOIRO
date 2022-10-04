@@ -14,10 +14,13 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands="start")
 async def start(message: types.Message):
-    start_buttons = ['Последние 5 новостей', 'Погода в Гродно', 'Расписание занятий']
+    start_buttons = ['Анонсы мероприятий(в разработке)', 'Последние 5 новостей', 'Расписание занятий', 'Погода в Гродно',
+                     'Сообщить об ошибке(в разработке)']
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*start_buttons)
-    await message.answer('Выберите необходимое действие', reply_markup=keyboard)
+    await message.answer(f'Добро пожаловать в наш чат-бот, {message.from_user.first_name}!\n'
+                         f'Если Вы нашли ошибку в работе чат-бота, напишите об этом, выбрав соответствующий пункт меню.\n'
+                         f'А сейчас выберите необходимое действие в меню.', reply_markup=keyboard)
 
 
 @dp.message_handler(Text(equals='Последние 5 новостей'))
@@ -49,20 +52,17 @@ async def get_weather_in_Grodno(message: types.Message):
 @dp.message_handler(Text(equals="Расписание занятий"))
 async def get_weather_in_Grodno(message: types.Message):
     dict_ttables = show_list_timetable()
-    ttables_buttons = []
-    await message.answer('Доступные ПК:')
+    markup = types.InlineKeyboardMarkup()
+    markup.row_width = 1
     for k, v in dict_ttables.items():
-        ttables_buttons.append(str(k))
-        await message.answer(f'{k} {v}')
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True).add(*ttables_buttons)
-    await message.answer('Выберите номер вашего ПК: ', reply_markup=keyboard)
+        markup.add(types.InlineKeyboardButton(f'{k} {v}', callback_data=k))
+    await bot.send_message(message.from_user.id, 'Выберите Ваше ПК:', reply_markup=markup)
 
-    @dp.message_handler()
-    async def echo_message(msg: types.Message):
-        mes = msg.text
-
-        if mes in dict_ttables:
-            tt = get_timetable(mes)
+    @dp.callback_query_handler(lambda call: True)
+    async def send_timetable(callback_query: types.CallbackQuery):
+        await bot.answer_callback_query(callback_query.id)
+        if callback_query.data in dict_ttables:
+            tt = get_timetable(callback_query.data)
             await message.answer(f"{hbold('Ваше ПК:')} {tt[0]}.\n\n")
             await message.answer_document(open(tt[1], "rb"), caption='Ваше расписание ☝')
 
