@@ -50,11 +50,12 @@ async def get_weather_in_Grodno(message: types.Message):
 async def get_weather_in_Grodno(message: types.Message):
     dict_ttables = show_list_timetable()
     ttables_buttons = []
+    await message.answer('Доступные ПК:')
     for k, v in dict_ttables.items():
         ttables_buttons.append(str(k))
-        await message.answer(f'{k}. {v}')
+        await message.answer(f'{k} {v}')
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True).add(*ttables_buttons)
-    await message.answer('Выберите номер вашего ПК (например, 1): ', reply_markup=keyboard)
+    await message.answer('Выберите номер вашего ПК: ', reply_markup=keyboard)
 
     @dp.message_handler()
     async def echo_message(msg: types.Message):
@@ -62,8 +63,8 @@ async def get_weather_in_Grodno(message: types.Message):
 
         if mes in dict_ttables:
             tt = get_timetable(mes)
-            await message.answer(f'Ваше ПК: {tt[0]}\n\n'
-                                 f'Нажмите {hlink("ЗДЕСЬ", tt[1])}, чтобы скачать расписание')
+            await message.answer(f"{hbold('Ваше ПК:')} {tt[0]}.\n\n")
+            await message.answer_document(open(tt[1], "rb"), caption='Ваше расписание ☝')
 
 
 async def news_every_10_minute():
