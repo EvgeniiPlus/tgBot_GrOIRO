@@ -1,11 +1,13 @@
 import asyncio
 import json
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.markdown import hbold, hlink
 from aiogram.dispatcher.filters import Text
+
 from config import token, channel_id
 from news import check_news_update
-from weather import get_weather
+from weather import get_weather, EmptyWeather
 from timetable import get_timetable, show_list_timetable
 
 bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
@@ -54,15 +56,21 @@ async def get_error_message(message: types.Message):
 @dp.message_handler(Text(equals="Погода в Гродно"))
 async def get_weather_in_Grodno(message: types.Message):
     weather = get_weather()
-    await message.answer(f'🌎 {hbold("Погода в Гродно сейчас.")} 🌈\n\n'
-                         f'{weather[2]}\n'
-                         f'{hbold("Температура:")} {round(weather[1])}°С\n'
-                         f'{hbold("Влажность:")} {weather[3]}%\n'
-                         f'{hbold("Давление:")} {weather[4]} мм.рт.ст\n'
-                         f'{hbold("Ветер:")} {weather[5]} м/с\n'
-                         f'{hbold("Рассвет:")} {weather[6]}\n'
-                         f'{hbold("Закат:")} {weather[7]}\n\n'
-                         f'{hbold("🤩 Хорошего дня 🤩")}')
+    if isinstance(weather, EmptyWeather):
+        await message.answer(f'Возникла ошибка при получении погоды.\nВероятно мы уже знаем об этом.\nПожалуйста, попробуйте позже.')
+        # raise weather
+        print(weather)
+    else:
+        await message.answer(f'🌎 {hbold("Погода в Гродно сейчас.")} 🌈\n\n'
+                             f'{hbold("Актуально на")} {weather.at_time.strftime("%d.%m %H:%M")} 🌈\n\n'
+                             f'{weather.describe}\n'
+                             f'{hbold("Температура:")} {round(weather.temperature)}°С\n'
+                             f'{hbold("Влажность:")} {weather.himidity}%\n'
+                             f'{hbold("Давление:")} {weather.pressure} мм.рт.ст\n'
+                             f'{hbold("Ветер:")} {weather.wind_speed} м/с\n'
+                             f'{hbold("Рассвет:")} {weather.sunrise.strftime("%d.%m %H:%M")}\n'
+                             f'{hbold("Закат:")} {weather.sunset.strftime("%d.%m %H:%M")}\n\n'
+                             f'{hbold("🤩 Хорошего дня 🤩")}')
 
 
 @dp.message_handler(Text(equals="Расписание занятий"))
