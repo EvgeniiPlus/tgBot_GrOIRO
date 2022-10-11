@@ -1,0 +1,5 @@
+.idea/
+news_dict.json
+
+env/
+__pycache__/

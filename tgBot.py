@@ -1,12 +1,15 @@
 import asyncio
 import json
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.markdown import hbold, hlink
 from aiogram.dispatcher.filters import Text
+
 from config import token, channel_id
 from news import check_news_update
-from weather import get_weather
+from weather import get_weather, EmptyWeather
 from timetable import get_timetable, show_list_timetable
+from announcement import check_ann_update, get_announcements
 
 bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
@@ -41,9 +44,15 @@ async def get_last_five_news(message: types.Message):
         await message.answer_photo(image, news)
 
 
-@dp.message_handler(Text(equals='Анонсы мероприятий(в разработке)'))
+@dp.message_handler(Text(equals='Анонсы мероприятий'))
 async def get_announcement(message: types.Message):
-    pass
+    ann_dict = get_announcements()
+
+    for k, v in sorted(ann_dict.items()):
+        ann = f"{hbold(v['ann_title'])}\n\n" \
+              f"Подробнее 👉{hlink('ЗДЕСЬ', v['ann_url'])}🎓"
+        print(ann)
+        await message.answer(ann)
 
 
 @dp.message_handler(Text(equals='Сообщить об ошибке(в разработке)'))
@@ -54,15 +63,22 @@ async def get_error_message(message: types.Message):
 @dp.message_handler(Text(equals="Погода в Гродно"))
 async def get_weather_in_Grodno(message: types.Message):
     weather = get_weather()
-    await message.answer(f'🌎 {hbold("Погода в Гродно сейчас.")} 🌈\n\n'
-                         f'{weather[2]}\n'
-                         f'{hbold("Температура:")} {round(weather[1])}°С\n'
-                         f'{hbold("Влажность:")} {weather[3]}%\n'
-                         f'{hbold("Давление:")} {weather[4]} мм.рт.ст\n'
-                         f'{hbold("Ветер:")} {weather[5]} м/с\n'
-                         f'{hbold("Рассвет:")} {weather[6]}\n'
-                         f'{hbold("Закат:")} {weather[7]}\n\n'
-                         f'{hbold("🤩 Хорошего дня 🤩")}')
+    if isinstance(weather, EmptyWeather):
+        await message.answer(
+            f'Возникла ошибка при получении погоды.\nВероятно мы уже знаем об этом.\nПожалуйста, попробуйте позже.')
+        # raise weather
+        print(weather)
+    else:
+        await message.answer(f'🌎 {hbold("Погода в Гродно сейчас.")} 🌈\n\n'
+                             f'{hbold("Актуально на")} {weather.at_time.strftime("%d.%m %H:%M")}\n\n'
+                             f'{weather.describe}\n'
+                             f'{hbold("Температура:")} {round(weather.temperature)}°С\n'
+                             f'{hbold("Влажность:")} {weather.himidity}%\n'
+                             f'{hbold("Давление:")} {weather.pressure} мм.рт.ст\n'
+                             f'{hbold("Ветер:")} {weather.wind_speed} м/с\n'
+                             f'{hbold("Рассвет:")} {weather.sunrise.strftime("%d.%m %H:%M")}\n'
+                             f'{hbold("Закат:")} {weather.sunset.strftime("%d.%m %H:%M")}\n\n'
+                             f'{hbold("🤩 Хорошего дня 🤩")}')
 
 
 @dp.message_handler(Text(equals="Расписание занятий"))
@@ -87,6 +103,7 @@ async def get_weather_in_Grodno(message: types.Message):
 async def news_every_10_minute():
     while True:
         fresh_news = check_news_update()
+        fresh_anns = check_ann_update()
 
         if len(fresh_news) >= 1:
             for k, v in sorted(fresh_news.items()):
@@ -94,6 +111,12 @@ async def news_every_10_minute():
                 news = f"🔥{hbold(v['article_title'])}🔥\n\n" \
                        f"Подробнее 👉{hlink('ЗДЕСЬ', v['article_url'])}🎓"
                 await bot.send_photo(channel_id, image, news)
+
+        if len(fresh_anns) >= 1:
+            for k, v in sorted(fresh_anns.items()):
+                ann = f"{hbold(v['ann_title'])}\n\n" \
+                      f"Подробнее 👉{hlink('ЗДЕСЬ', v['ann_url'])}🎓"
+                await bot.send_message(channel_id, ann)
 
         await asyncio.sleep(600)
 
