@@ -20,10 +20,12 @@ def get_announcements():
         ann_url = url + ann.find('a').get('href')
         ann_title = ann.find('a').text
         ann_id = ann_url[ann_url.find('p-') + 2: -5]
+        ann_date = ann.find('div', class_ = 'date').text
 
         ann_dict[ann_id] = {
             'ann_title': ann_title,
-            'ann_url': ann_url
+            'ann_url': ann_url,
+            'ann_date': ann_date
         }
 
         with open('ann_dict.json', 'w') as f:
@@ -45,14 +47,17 @@ def check_ann_update():
             continue
         else:
             ann_title = ann.find('a').text
+            ann_date = ann.find('div', class_='date').text
 
             ann_dict[ann_id] = {
                 'ann_title': ann_title,
-                'ann_url': ann_url
+                'ann_url': ann_url,
+                'ann_date': ann_date
             }
             fresh_anns[ann_id] = {
                 'ann_title': ann_title,
-                'ann_url': ann_url
+                'ann_url': ann_url,
+                'ann_date': ann_date
             }
     with open('ann_dict.json', 'w') as f:
         json.dump(ann_dict, f, indent=4, ensure_ascii=False)

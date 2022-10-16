@@ -20,7 +20,7 @@ def get_timetable(number_PK):
         if v.split()[0] == number_PK:
             # print(number_PK)
             tt_item = v.split('.')[0]
-            tt_url = f'{ttable_url}\{v}'
+            tt_url = f'{ttable_url}/{v}'
             # print(tt_item, tt_url)
     return [tt_item, tt_url]
 

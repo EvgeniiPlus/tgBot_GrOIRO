@@ -17,7 +17,7 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands="start")
 async def start(message: types.Message):
-    start_buttons = ['Анонсы мероприятий(в разработке)',
+    start_buttons = ['Анонсы мероприятий',
                      'Последние 5 новостей',
                      'Расписание занятий',
                      'Погода в Гродно',
@@ -50,9 +50,10 @@ async def get_announcement(message: types.Message):
 
     for k, v in sorted(ann_dict.items()):
         ann = f"{hbold(v['ann_title'])}\n\n" \
+              f"{hbold('Дата: ' + v['ann_date'])}\n\n" \
               f"Подробнее 👉{hlink('ЗДЕСЬ', v['ann_url'])}🎓"
         print(ann)
-        await message.answer(ann)
+        await message.answer(ann, disable_web_page_preview=True)
 
 
 @dp.message_handler(Text(equals='Сообщить об ошибке(в разработке)'))
@@ -115,6 +116,7 @@ async def news_every_10_minute():
         if len(fresh_anns) >= 1:
             for k, v in sorted(fresh_anns.items()):
                 ann = f"{hbold(v['ann_title'])}\n\n" \
+                      f"{hbold('Дата: ' + v['ann_date'])}\n\n" \
                       f"Подробнее 👉{hlink('ЗДЕСЬ', v['ann_url'])}🎓"
                 await bot.send_message(channel_id, ann)
 
