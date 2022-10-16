@@ -6,9 +6,10 @@ from pathlib import Path
 # channel_id = os.getenv('CHANNEL_ID')
 # token_weather = os.getenv('TOKEN_WEATHER')
 
-token ='5760952713:AAFt8R6T7aULTgPpMWbeCvExoiAmefWSnhE'
+token ='5630957891:AAHRBSnmwrNU9pWc0inki92Pf0Kqkswym2s'
 channel_id = '842095003'
 token_weather = 'f73b75a22912e6df0b7e5e2e907ce6fb'
+admin_id = '842095003'
 
 
 headers = {

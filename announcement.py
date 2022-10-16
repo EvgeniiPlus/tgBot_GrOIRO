@@ -66,7 +66,7 @@ def check_ann_update():
 
 def main():
     # get_announcements()
-    print(check_ann_update())
+    check_ann_update()
 
 
 if __name__ == '__main__':

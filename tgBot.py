@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.markdown import hbold, hlink
 from aiogram.dispatcher.filters import Text
 
-from config import token, channel_id
+from config import token, channel_id, admin_id
 from news import check_news_update
 from weather import get_weather, EmptyWeather
 from timetable import get_timetable, show_list_timetable
@@ -13,6 +13,7 @@ from announcement import check_ann_update, get_announcements
 
 bot = Bot(token=token, parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
+users_dict = {}
 
 
 @dp.message_handler(commands="start")
@@ -21,9 +22,27 @@ async def start(message: types.Message):
                      'Последние 5 новостей',
                      'Расписание занятий',
                      'Погода в Гродно',
-                     'Сообщить об ошибке(в разработке)']
+                     ]
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(*start_buttons)
+
+    global user_id
+    user_id = message.from_user.id
+    name = message.from_user.first_name
+    last_name = message.from_user.last_name
+    date = message.date.ctime()
+    # def user_photo(message):
+    #     photo = bot.get_user_profile_photos(message.from_user.id)
+    #     bot.send_photo(message.chat.id, photo.photos[0][2].file_id)
+
+    # users_dict[user_id] = {
+    #     'name': name,
+    #     'last_name': last_name,
+    #     'date': date,
+    # }
+
+    with open('users.txt', 'a') as f:
+        f.write(f' {date} {user_id} {name} {last_name}\n')
 
     await message.answer(
         f'Добрый день, {message.from_user.first_name}!\n👩🏻‍🏫 Добро пожаловать в чат-бот Гродненского областного института развития образования!‍🎓‍🏫‍ \n'
@@ -52,13 +71,22 @@ async def get_announcement(message: types.Message):
         ann = f"{hbold(v['ann_title'])}\n\n" \
               f"{hbold('Дата: ' + v['ann_date'])}\n\n" \
               f"Подробнее 👉{hlink('ЗДЕСЬ', v['ann_url'])}🎓"
-        print(ann)
+        # print(ann)
         await message.answer(ann, disable_web_page_preview=True)
 
 
-@dp.message_handler(Text(equals='Сообщить об ошибке(в разработке)'))
-async def get_error_message(message: types.Message):
-    pass
+# @dp.message_handler(Text(equals='Сообщить об ошибке'))
+# async def get_error_message(message: types.Message):
+#     await message.answer('Введите Ваше сообщение и нажмите "Отправить"')
+#
+#     @dp.callback_query_handler(lambda call: True)
+#     async def get_message_from_user(callback_query: types.CallbackQuery):
+#         await bot.send_message(admin_id,
+#                                f'Пользователь {message.from_user.first_name + " " + message.from_user.last_name}'
+#                                f'(id: {message.from_user.id}) написал Вам сообщение.\n\n'
+#                                f'{callback_query.data}')
+#         await message.answer('Спасибо, Ваше сообщение отправлено администратору.')
+
 
 
 @dp.message_handler(Text(equals="Погода в Гродно"))
@@ -68,7 +96,7 @@ async def get_weather_in_Grodno(message: types.Message):
         await message.answer(
             f'Возникла ошибка при получении погоды.\nВероятно мы уже знаем об этом.\nПожалуйста, попробуйте позже.')
         # raise weather
-        print(weather)
+        # print(weather)
     else:
         await message.answer(f'🌎 {hbold("Погода в Гродно сейчас.")} 🌈\n\n'
                              f'{hbold("Актуально на")} {weather.at_time.strftime("%d.%m %H:%M")}\n\n'
@@ -83,7 +111,7 @@ async def get_weather_in_Grodno(message: types.Message):
 
 
 @dp.message_handler(Text(equals="Расписание занятий"))
-async def get_weather_in_Grodno(message: types.Message):
+async def choose_timetable(message: types.Message):
     dict_ttables = show_list_timetable()
     markup = types.InlineKeyboardMarkup()
     markup.row_width = 1
@@ -111,14 +139,14 @@ async def news_every_10_minute():
                 image = types.input_file.InputFile.from_url(v['article_img'])
                 news = f"🔥{hbold(v['article_title'])}🔥\n\n" \
                        f"Подробнее 👉{hlink('ЗДЕСЬ', v['article_url'])}🎓"
-                await bot.send_photo(channel_id, image, news)
+                await bot.send_photo(user_id, image, news)
 
         if len(fresh_anns) >= 1:
             for k, v in sorted(fresh_anns.items()):
                 ann = f"{hbold(v['ann_title'])}\n\n" \
                       f"{hbold('Дата: ' + v['ann_date'])}\n\n" \
                       f"Подробнее 👉{hlink('ЗДЕСЬ', v['ann_url'])}🎓"
-                await bot.send_message(channel_id, ann)
+                await bot.send_message(user_id, ann)
 
         await asyncio.sleep(600)
 
